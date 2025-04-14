@@ -128,7 +128,7 @@ int list_accounts(int pages)
         db = fopen(s, "r");
 
         parse_account(&acc, s, db);
-        printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", acc.id, acc.first_name, acc.last_name, acc.iban, (double)acc.balance/100);
+        printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", acc.id, acc.first_name, acc.last_name, acc.iban, (double)acc.balance / 100);
 
         fclose(db);
     }
@@ -147,7 +147,7 @@ void add_account_money(struct Account a)
     }
     a.balance += (int)(amount * 100);
     write_account(&a);
-    printf("[\033[92;1mBank\033[0m] Inserarea a avut loc cu succes! Noua balanta: \033[97;1m%.2f\033[0m \n", (double)(a.balance/100.00));
+    printf("[\033[92;1mBank\033[0m] Inserarea a avut loc cu succes! Noua balanta: \033[97;1m%.2f\033[0m \n", (double)(a.balance / 100.00));
 }
 
 void withdraw_account_money(struct Account a)
@@ -161,7 +161,7 @@ void withdraw_account_money(struct Account a)
         return;
     }
 
-    if (a.balance + (int)(amount*100) < 0)
+    if (a.balance + (int)(amount * 100) < 0)
     {
         printf("[\033[31;1mBank Error\033[0m] Suma scoasa nu poate fi mai mare decat suma contului ! %lf\n", amount);
         return;
@@ -169,7 +169,7 @@ void withdraw_account_money(struct Account a)
 
     a.balance += (int)(amount * 100);
     write_account(&a);
-    printf("[\033[92;1mBank\033[0m] Scoaterea a avut loc cu succes! Noua balanta: \033[97;1m%.2f\033[0m \n", (double)(a.balance/100.00));
+    printf("[\033[92;1mBank\033[0m] Scoaterea a avut loc cu succes! Noua balanta: \033[97;1m%.2f\033[0m \n", (double)(a.balance / 100.00));
 }
 
 void withdraw_money(char *iden)
@@ -418,5 +418,9 @@ int main(int argc, char **argv)
             return 0;
         }
         withdraw_money(*(argv + 2));
+    }
+    else
+    {
+        printf("[\033[31;1mBank Error\033[0m] Aceasta comanda inca nu a fost implementata!\n");
     }
 }
