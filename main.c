@@ -26,6 +26,26 @@ struct Account
     int balance;
 };
 
+DIR *open_account_dir()
+{
+    DIR *dir = opendir("./accounts");
+    if (dir == NULL)
+    {
+        printf("[\033[31;1mBank Error\033[0m] Nu exista un fisier pentru conturi (./accounts). Te rugam creeaza unul.\n");
+        return NULL;
+    }
+
+    readdir(dir);
+    readdir(dir);
+
+    return dir;
+}
+
+void print_account(struct Account a)
+{
+    print_account(a);
+}
+
 void generate_random_string(char *str, size_t length)
 {
     const char charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -99,13 +119,10 @@ void parse_account(struct Account *a, char *s, FILE *f)
 int list_accounts(int pages)
 {
     struct dirent *f;
-    DIR *dir = opendir("./accounts");
+    DIR *dir = open_account_dir();
     if (dir == NULL)
         return -1;
 
-    // scoatem . si ..
-    readdir(dir);
-    readdir(dir);
     char s[100];
     struct Account acc;
 
@@ -128,7 +145,7 @@ int list_accounts(int pages)
         db = fopen(s, "r");
 
         parse_account(&acc, s, db);
-        printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", acc.id, acc.first_name, acc.last_name, acc.iban, (double)acc.balance / 100);
+        print_account(acc);
 
         fclose(db);
     }
@@ -193,7 +210,7 @@ void withdraw_money(char *iden, char *uid, double amount)
     else if (strcmp(iden, "cont") == 0)
     {
         struct dirent *f;
-        DIR *dir = opendir("./accounts");
+        DIR *dir = open_account_dir();
         if (dir == NULL)
         {
             printf("[\033[31;1mBank Error\033[0m] Nu exista un fisier pentru conturi(accounts). Te rugam creeaza unul.");
@@ -206,8 +223,6 @@ void withdraw_money(char *iden, char *uid, double amount)
             return;
         }
 
-        readdir(dir);
-        readdir(dir);
         char s[125];
         while ((f = readdir(dir)) != NULL)
         {
@@ -234,6 +249,8 @@ void withdraw_money(char *iden, char *uid, double amount)
         printf("[\033[31;1mBank Error\033[0m] Optiune invalida pentru identificator!\n");
     }
 }
+
+
 
 void insert_money(char *iden, char *uid, double amount)
 {
@@ -262,7 +279,7 @@ void insert_money(char *iden, char *uid, double amount)
     else if (strcmp(iden, "cont") == 0)
     {
         struct dirent *f;
-        DIR *dir = opendir("./accounts");
+        DIR *dir = open_account_dir();
         if (dir == NULL)
         {
             printf("[\033[31;1mBank Error\033[0m] Nu exista un fisier pentru conturi(accounts). Te rugam creeaza unul.");
@@ -275,8 +292,6 @@ void insert_money(char *iden, char *uid, double amount)
             return;
         }
 
-        readdir(dir);
-        readdir(dir);
         char s[125];
         while ((f = readdir(dir)) != NULL)
         {
@@ -339,8 +354,14 @@ void delete_account(char *iden, char *uid)
     }
     else if (strcmp(iden, "cont") == 0)
     {
+        if (strlen(uid) < 29)
+        {
+            printf("[\033[31;1mBank Error\033[0m] Te reguam introdu un cont valid!\n");
+            return;
+        }
+
         struct dirent *f;
-        DIR *dir = opendir("./accounts");
+        DIR *dir = open_account_dir();
         if (dir == NULL)
         {
             printf("[\033[31;1mBank Error\033[0m] Nu exista un fisier pentru conturi(accounts). Te rugam creeaza unul.");
@@ -353,8 +374,6 @@ void delete_account(char *iden, char *uid)
             return;
         }
 
-        readdir(dir);
-        readdir(dir);
         char s[125];
         while ((f = readdir(dir)) != NULL)
         {
@@ -391,15 +410,13 @@ void delete_account(char *iden, char *uid)
 void search_account(char *iden, char *uid)
 {
     struct dirent *f;
-    DIR *dir = opendir("./accounts");
+    DIR *dir = open_account_dir();
     if (dir == NULL)
     {
         printf("[\033[31;1mBank Error\033[0m] Nu exista un fisier pentru conturi(accounts). Te rugam creeaza unul.");
         return;
     }
 
-    readdir(dir);
-    readdir(dir);
     char s[125];
     while ((f = readdir(dir)) != NULL)
     {
@@ -417,25 +434,30 @@ void search_account(char *iden, char *uid)
 
             if (strcmp(iden, "id") == 0 && atoi(uid) == a.id)
             {
-                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                print_account(a);
                 fclose(db);
                 return;
             }
             if (strcmp(iden, "prenume") == 0 && strcmp(uid, a.first_name) == 0)
             {
-                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                print_account(a);
                 fclose(db);
                 return;
             }
             if (strcmp(iden, "nume") == 0 && strcmp(uid, a.last_name) == 0)
             {
-                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                print_account(a);
                 fclose(db);
                 return;
             }
             if (strcmp(iden, "cont") == 0 && strcmp(uid, a.iban) == 0)
             {
-                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                if (strlen(uid) < 29)
+                {
+                    printf("[\033[31;1mBank Error\033[0m] Te reguam introdu un cont valid!\n");
+                    return;
+                }
+                print_account(a);
                 fclose(db);
                 return;
             }
