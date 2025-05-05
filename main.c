@@ -135,11 +135,8 @@ int list_accounts(int pages)
     return 0;
 }
 
-void add_account_money(struct Account a)
+void _add_account_money(struct Account a, double amount)
 {
-    float amount;
-    printf("Suma(xxx.xx): ");
-    scanf("%f", &amount);
     if (amount <= 0.0)
     {
         printf("[\033[31;1mBank Error\033[0m] Suma insearata nu poate fi negativa! %lf\n", amount);
@@ -150,11 +147,8 @@ void add_account_money(struct Account a)
     printf("[\033[92;1mBank\033[0m] Inserarea a avut loc cu succes! Noua balanta: \033[97;1m%.2f\033[0m \n", (double)(a.balance / 100.00));
 }
 
-void withdraw_account_money(struct Account a)
+void withdraw_account_money(struct Account a, double amount)
 {
-    float amount;
-    printf("Suma(xxx.xx): ");
-    scanf("%f", &amount);
     if (amount >= 0.0)
     {
         printf("[\033[31;1mBank Error\033[0m] Suma scoasa nu poate fi pozitiva! %lf\n", amount);
@@ -172,33 +166,28 @@ void withdraw_account_money(struct Account a)
     printf("[\033[92;1mBank\033[0m] Scoaterea a avut loc cu succes! Noua balanta: \033[97;1m%.2f\033[0m \n", (double)(a.balance / 100.00));
 }
 
-void withdraw_money(char *iden)
+void withdraw_money(char *iden, char *uid, double amount)
 {
     if (strcmp(iden, "id") == 0)
     {
-        char aux[125];
-        printf("[\033[92;1mBank\033[0m] Te rugam introdu id-ul contului in care vrei sa inserezi bani!");
-        printf("\n\nid: ");
-        scanf("%s", aux);
-
-        if (!isdigit(aux[0]))
+        if (!isdigit(uid[0]))
         {
             printf("[\033[31;1mBank Error\033[0m] Te rugam introdu un id valid! [1..]\n");
             return;
         }
 
-        int _id = atoi(aux);
-        sprintf(aux, "./accounts/%d.acc", _id);
+        int _id = atoi(uid);
+        sprintf(uid, "./accounts/%d.acc", _id);
 
-        FILE *f = fopen(aux, "r+");
+        FILE *f = fopen(uid, "r+");
         if (f == NULL)
         {
             printf("[\033[31;1mBank Error\033[0m] id-ul %d nu exista!\n", _id);
             return;
         }
         struct Account a;
-        parse_account(&a, aux, f);
-        withdraw_account_money(a);
+        parse_account(&a, uid, f);
+        withdraw_account_money(a, amount);
         fclose(f);
     }
     else if (strcmp(iden, "cont") == 0)
@@ -211,11 +200,7 @@ void withdraw_money(char *iden)
             return;
         }
 
-        char t[50];
-        printf("[\033[92;1mBank\033[0m] Te rugam introdu contul in care vrei sa inserezi bani!\n");
-        printf("\nIBAN: ");
-        scanf("%s", t);
-        if (strlen(t) < 29)
+        if (strlen(uid) < 29)
         {
             printf("[\033[31;1mBank Error\033[0m] Te reguam introdu un cont valid!\n");
             return;
@@ -232,12 +217,12 @@ void withdraw_money(char *iden)
             sprintf(s, "./accounts/%s", f->d_name);
             db = fopen(s, "r+");
             fgets(s, 120, db);
-            if (strstr(s, t) != NULL)
+            if (strstr(s, uid) != NULL)
             {
                 struct Account a;
 
                 parse_account(&a, s, db);
-                withdraw_account_money(a);
+                withdraw_account_money(a, amount);
                 fclose(db);
                 return;
             }
@@ -250,33 +235,28 @@ void withdraw_money(char *iden)
     }
 }
 
-void insert_money(char *iden)
+void insert_money(char *iden, char *uid, double amount)
 {
     if (strcmp(iden, "id") == 0)
     {
-        char aux[125];
-        printf("[\033[92;1mBank\033[0m] Te rugam introdu id-ul contului in care vrei sa inserezi bani!");
-        printf("\n\nid: ");
-        scanf("%s", aux);
-
-        if (!isdigit(aux[0]))
+        if (!isdigit(uid[0]))
         {
             printf("[\033[31;1mBank Error\033[0m] Te rugam introdu un id valid! [1..]\n");
             return;
         }
 
-        int _id = atoi(aux);
-        sprintf(aux, "./accounts/%d.acc", _id);
+        int _id = atoi(uid);
+        sprintf(uid, "./accounts/%d.acc", _id);
 
-        FILE *f = fopen(aux, "r+");
+        FILE *f = fopen(uid, "r+");
         if (f == NULL)
         {
-            printf("[\033[31;1mBank Error\033[0m] id-ul %d nu exista!\n", _id);
+            printf("[\033[31;1mBank Error\033[0m] id-ul \"%d\" nu exista!\n", _id);
             return;
         }
         struct Account a;
-        parse_account(&a, aux, f);
-        add_account_money(a);
+        parse_account(&a, uid, f);
+        _add_account_money(a, amount);
         fclose(f);
     }
     else if (strcmp(iden, "cont") == 0)
@@ -289,11 +269,7 @@ void insert_money(char *iden)
             return;
         }
 
-        char t[50];
-        printf("[\033[92;1mBank\033[0m] Te rugam introdu contul in care vrei sa inserezi bani!\n");
-        printf("\nIBAN: ");
-        scanf("%s", t);
-        if (strlen(t) < 29)
+        if (strlen(uid) < 29)
         {
             printf("[\033[31;1mBank Error\033[0m] Te reguam introdu un cont valid!\n");
             return;
@@ -310,17 +286,18 @@ void insert_money(char *iden)
             sprintf(s, "./accounts/%s", f->d_name);
             db = fopen(s, "r+");
             fgets(s, 120, db);
-            if (strstr(s, t) != NULL)
+            if (strstr(s, uid) != NULL)
             {
                 struct Account a;
 
                 parse_account(&a, s, db);
-                add_account_money(a);
+                _add_account_money(a, amount);
                 fclose(db);
                 return;
             }
             fclose(db);
         }
+        printf("[\033[31;1mBank Error\033[0m] Contul \"%s\" nu a fost gasit!\n", uid);
     }
     else
     {
@@ -328,19 +305,15 @@ void insert_money(char *iden)
     }
 }
 
-int create_account()
+int create_account(char *first_name, char *last_name)
 {
-    printf("[\033[92;1mBank\033[0m] Introdu datele necesare pentru a crea contul:\n");
     struct Account a;
     a.id = get_last_account_id() + 1;
     a.balance = 0 * CENT;
     generate_random_string(a.iban, 29);
 
-    printf("Prenume: ");
-    scanf("%s", a.first_name);
-
-    printf("Nume: ");
-    scanf("%s", a.last_name);
+    strcpy(a.first_name, first_name);
+    strcpy(a.last_name, last_name);
 
     write_account(&a);
 
@@ -353,7 +326,7 @@ void show_menu()
     printf("[\033[92;1mBank\033[0m] Aici este lista de comenzi:\n\n");
     printf("creeaza-cont                        Creeaza un cont bancar pentru un client.\n");
     printf("lista-conturi   [int pagina]        Listeaza conturile bancare prin paginare.\n");
-    printf("insereaza-bani  [char* identificator{id,cont}]"
+    printf("insereaza-bani  [char* identificator{id, cont}]"
            "       Inseara bani intr-un cont bancar dupa numar cont sau id.\n");
     printf("scoate-bani     [char* identificator{id, cont}]"
            "       Scoate bani dintr-un cont bancar dupa numar cont sau id.\n");
@@ -399,25 +372,30 @@ int main(int argc, char **argv)
     }
     else if (strcmp(*(argv + 1), "creeaza-cont") == 0)
     {
-        create_account();
+        if (argc < 4)
+        {
+            printf("[\033[31;1mBank Error\033[0m] Te rugam introdu toate datele! Exemplu:\n./program creeaza-cont {prenume} {nume}\n");
+            return 0;
+        }
+        create_account(*(argv + 2), *(argv + 3));
     }
     else if (strcmp(*(argv + 1), "insereaza-bani") == 0)
     {
-        if (argc < 3)
+        if (argc < 5)
         {
-            printf("[\033[31;1mBank Error\033[0m] Te rugam introdu identificatorul dorit!\n");
+            printf("[\033[31;1mBank Error\033[0m] Te rugam introdu toate datele! Exemplu:\n./program insereaza-bani {id, cont} {uid} 20\n");
             return 0;
         }
-        insert_money(*(argv + 2));
+        insert_money(*(argv + 2), *(argv + 3), atof(*(argv + 4)));
     }
     else if (strcmp(*(argv + 1), "scoate-bani") == 0)
     {
-        if (argc < 3)
+        if (argc < 5)
         {
-            printf("[\033[31;1mBank Error\033[0m] Te rugam introdu identificatorul dorit!\n");
+            printf("[\033[31;1mBank Error\033[0m] Te rugam introdu toate datele! Exemplu:\n./program scoate-bani {id, cont} {uid} -20\n");
             return 0;
         }
-        withdraw_money(*(argv + 2));
+        withdraw_money(*(argv + 2), *(argv + 3), atof(*(argv + 4)));
     }
     else
     {
