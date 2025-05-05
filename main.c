@@ -317,19 +317,147 @@ int create_account(char *first_name, char *last_name)
 
     write_account(&a);
 
-    printf("\n\n[\033[92;1mBank\033[0m] Contul a fost creat cu succes. ID: %d\n", get_last_account_id());
+    printf("\n[\033[92;1mBank\033[0m] Contul a fost creat cu succes. ID: %d\n", get_last_account_id());
     return 0;
+}
+
+void delete_account(char *iden, char *uid)
+{
+    if (strcmp(iden, "id") == 0)
+    {
+        char aux[100];
+        int id = atoi(uid);
+        sprintf(aux, "./accounts/%d.acc", id);
+        if (remove(aux) == 0)
+        {
+            printf("[\033[92;1mBank\033[0m] Contul cu id-ul %d a fost sters cu succes!\n", id);
+        }
+        else
+        {
+            printf("[\033[31;1mBank Error\033[0m] Contul cu id-ul %d nu exista!\n", id);
+        }
+    }
+    else if (strcmp(iden, "cont") == 0)
+    {
+        struct dirent *f;
+        DIR *dir = opendir("./accounts");
+        if (dir == NULL)
+        {
+            printf("[\033[31;1mBank Error\033[0m] Nu exista un fisier pentru conturi(accounts). Te rugam creeaza unul.");
+            return;
+        }
+
+        if (strlen(uid) < 29)
+        {
+            printf("[\033[31;1mBank Error\033[0m] Te reguam introdu un cont valid!\n");
+            return;
+        }
+
+        readdir(dir);
+        readdir(dir);
+        char s[125];
+        while ((f = readdir(dir)) != NULL)
+        {
+            if (f->d_name[0] == '_')
+                continue;
+            FILE *db;
+            sprintf(s, "./accounts/%s", f->d_name);
+            db = fopen(s, "r+");
+            fgets(s, 120, db);
+            if (strstr(s, uid) != NULL)
+            {
+                struct Account a;
+
+                parse_account(&a, s, db);
+
+                sprintf(s, "./accounts/%s", f->d_name);
+
+                if (remove(s) == 0)
+                {
+                    printf("[\033[92;1mBank\033[0m] Contul cu ibanul %s a fost sters cu succes!\n", a.iban);
+                }
+                return;
+            }
+            fclose(db);
+        }
+        printf("[\033[31;1mBank Error\033[0m] Contul cu ibanul %s nu exista!\n", uid);
+    }
+    else
+    {
+        printf("[\033[31;1mBank Error\033[0m] Optiune invalida pentru identificator!\n");
+    }
+}
+
+void search_account(char *iden, char *uid)
+{
+    struct dirent *f;
+    DIR *dir = opendir("./accounts");
+    if (dir == NULL)
+    {
+        printf("[\033[31;1mBank Error\033[0m] Nu exista un fisier pentru conturi(accounts). Te rugam creeaza unul.");
+        return;
+    }
+
+    readdir(dir);
+    readdir(dir);
+    char s[125];
+    while ((f = readdir(dir)) != NULL)
+    {
+        if (f->d_name[0] == '_')
+            continue;
+        FILE *db;
+        sprintf(s, "./accounts/%s", f->d_name);
+        db = fopen(s, "r+");
+        fgets(s, 120, db);
+        if (strstr(s, uid) != NULL)
+        {
+            struct Account a;
+
+            parse_account(&a, s, db);
+
+            if (strcmp(iden, "id") == 0 && atoi(uid) == a.id)
+            {
+                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                fclose(db);
+                return;
+            }
+            if (strcmp(iden, "prenume") == 0 && strcmp(uid, a.first_name) == 0)
+            {
+                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                fclose(db);
+                return;
+            }
+            if (strcmp(iden, "nume") == 0 && strcmp(uid, a.last_name) == 0)
+            {
+                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                fclose(db);
+                return;
+            }
+            if (strcmp(iden, "cont") == 0 && strcmp(uid, a.iban) == 0)
+            {
+                printf("# id: \033[96;1m%d\033[0m | fn: \033[93;1m%s\033[0m | ln: \033[93;1m%s\033[0m | cont: \033[31;1m%s\033[0m | b: \033[97;1m%.2f\033[0m #\n", a.id, a.first_name, a.last_name, a.iban, (double)a.balance / 100);
+                fclose(db);
+                return;
+            }
+        }
+    }
+
+    printf("[\033[31;1mBank Error\033[0m] Contul nu fost gasit!\n");
 }
 
 void show_menu()
 {
     printf("[\033[92;1mBank\033[0m] Aici este lista de comenzi:\n\n");
-    printf("creeaza-cont                        Creeaza un cont bancar pentru un client.\n");
+    printf("creeaza-cont    [char* prenume]                 [char* nume]                   Creeaza un cont bancar pentru un client.\n");
     printf("lista-conturi   [int pagina]        Listeaza conturile bancare prin paginare.\n");
-    printf("insereaza-bani  [char* identificator{id, cont}]"
+    printf("insereaza-bani  [char* identificator{id, cont}] [double suma]"
            "       Inseara bani intr-un cont bancar dupa numar cont sau id.\n");
-    printf("scoate-bani     [char* identificator{id, cont}]"
+    printf("scoate-bani     [char* identificator{id, cont}] [double -suma]"
            "       Scoate bani dintr-un cont bancar dupa numar cont sau id.\n");
+    printf("sterge-cont     [char* identificator{id, cont}]"
+           "            Sterge un cont bancar dupa numar cont sau id.\n");
+    printf("cauta-cont      [char* identificator{id, cont, nume, prenume}] [char* valoare]"
+           "            Cauta un cont bancar dupa un identificator.\n");
 }
 
 int main(int argc, char **argv)
@@ -378,6 +506,24 @@ int main(int argc, char **argv)
             return 0;
         }
         create_account(*(argv + 2), *(argv + 3));
+    }
+    else if (strcmp(*(argv + 1), "sterge-cont") == 0)
+    {
+        if (argc < 4)
+        {
+            printf("[\033[31;1mBank Error\033[0m] Te rugam introdu toate datele! Exemplu:\n./program sterge-cont {iden: {cont, id}} {valoare}\n");
+            return 0;
+        }
+        delete_account(*(argv + 2), *(argv + 3));
+    }
+    else if (strcmp(*(argv + 1), "cauta-cont") == 0)
+    {
+        if (argc < 4)
+        {
+            printf("[\033[31;1mBank Error\033[0m] Te rugam introdu toate datele! Exemplu:\n./program cauta-cont {iden: {nume, prenume, id, cont}} {valoare}\n");
+            return 0;
+        }
+        search_account(*(argv + 2), *(argv + 3));
     }
     else if (strcmp(*(argv + 1), "insereaza-bani") == 0)
     {
